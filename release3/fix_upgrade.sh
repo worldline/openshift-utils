@@ -1,14 +1,42 @@
 #!/bin/bash
 
+yum install -y rubygem-openshift-origin-node \
+               rubygem-passenger-native \
+               openshift-origin-port-proxy \
+               openshift-origin-node-util \
+               rubygem-openshift-origin-container-selinux
+
 yum install -y augeas
 yum install -y rubygem-openshift-origin-frontend-apache-mod-rewrite.noarch rubygem-openshift-origin-frontend-nodejs-websocket.noarch rubygem-openshift-origin-frontend-apachedb.noarch
 
+service openshift-node-web-proxy enable
+service openshift-node-web-proxy start
 
 iptables -N rhc-app-comm
 iptables -I INPUT 4 -m tcp -p tcp --dport 35531:65535 -m state --state NEW -j ACCEPT
 iptables -I INPUT 5 -j rhc-app-comm
 iptables -I OUTPUT 1 -j rhc-app-comm
 /sbin/service iptables save
+
+rm -fr /usr/libexec/openshift/cartridges/v2/nodejs
+
+/usr/sbin/oo-admin-cartridge -l |sed 's/(//g' |sed 's/)//g' |sed 's/,//g' | awk '{print "/usr/sbin/oo-admin-cartridge -a erase -n " $2 " -v " $3 " -c " $4 }' |xargs -0 bash -c
+
+/usr/sbin/oo-admin-cartridge --recursive -a install -s /usr/libexec/openshift/cartridges/
+/usr/sbin/oo-admin-cartridge --recursive -a install -s /usr/libexec/openshift/cartridges/v2/
+
+
+lokkit --service=ssh
+lokkit --service=https
+lokkit --service=http
+lokkit --port=8000:tcp
+lokkit --port=8443:tcp
+chkconfig httpd on
+chkconfig network on
+chkconfig sshd on
+chkconfig oddjobd on
+chkconfig openshift-node-web-proxy on
+
 
 cat <<EOF | augtool
 set /files/etc/pam.d/sshd/#comment[.='pam_selinux.so close should be the first session rule'] 'pam_openshift.so close should be the first session rule'
