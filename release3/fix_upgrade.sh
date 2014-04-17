@@ -167,7 +167,7 @@ sed -i 's/OPENSHIFT_NODE_PLUGINS=".*"/OPENSHIFT_NODE_PLUGINS=""/' /etc/openshift
 
 set -e
 
-./fix_deployments.sh
+./fix_deployment.sh
 ./fix_gear_registry.sh
-./migrate_port_proxy.sh
+./migrate_port_proxy.sh all
 ./fix_rewrite.sh
