@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm /var/lib/openshift/last_access.log
 
 GEAR_BASE_DIR=/var/lib/openshift
 
