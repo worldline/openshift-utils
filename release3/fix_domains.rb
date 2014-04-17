@@ -7,9 +7,9 @@ require 'rubygems'
 require 'moped'
 
 
-session = Moped::Session.new([ "localhost:27017"])
-session.use "openshift"
-session.login("openshift", "moo")
+session = Moped::Session.new([ "localhost:27015"])
+session.use "openshift_broker_dev"
+#session.login("openshift", "moo")
 users = session[:cloud_users]
 domains = session[:domains]
 

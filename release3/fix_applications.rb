@@ -8,9 +8,9 @@ require 'moped'
 require 'net/ssh'
 require 'securerandom'
 
-session = Moped::Session.new([ "localhost:27017"])
+session = Moped::Session.new([ "localhost:27015"])
 session.use "openshift_broker_dev"
-session.login("openshift", "mooo")
+#session.login("openshift", "mooo")
 users = session[:cloud_users]
 domains = session[:domains]
 applications = session[:applications]
@@ -37,7 +37,7 @@ Net::SSH.start(
   host, 'root',
   :host_key => "ssh-rsa",
   :encryption => "blowfish-cbc",
-  :keys => [ "/root/.ssh/rsync_id_rsa" ],
+  :keys => [ "/etc/openshift/rsync_id_rsa" ],
   :compression => "zlib"
 ) do |session|
     cmd.each do |k,v|
@@ -52,6 +52,7 @@ users.find.each do |u|
 	
 	login = u['login']
 	user_id = u['_id']
+  puts "user #{login}"
 
 	dom = domains.find(owner_id: user_id).first
 
@@ -66,6 +67,7 @@ users.find.each do |u|
 	apps = applications.find(domain_id: dom_id)
 
 	apps.each do |a|
+		puts "app #{a['canonical_name']}"
 
 
 		secret_token = SecureRandom.urlsafe_base64(96, false)
@@ -94,11 +96,15 @@ users.find.each do |u|
 		 end
 
 		#apps
-		if a['scalable']
+		puts "gi #{a['group_instances']}"
+		if a['scalable'] && a['group_instances'] != nil
 			puts "App escalavel -  #{a['canonical_name']} --- #{a['_id']}"
 			@gi_id = []
 			a['group_instances'].each do |gi|
 				@gi_id << { _id: gi['_id'] }
+        if gi['gears'] == nil
+           gi['gears'] = []
+        end
 				gi['gears'].each do |ge|	
 					port_interfaces = Hash.new
 					aport = []
@@ -182,23 +188,26 @@ users.find.each do |u|
 		elsif !a['scalable']
 			gi_id = a['group_instances'].map { |gi| gi['_id'] }
 			gears = a['group_instances'].map { |gi| gi['gears'] }.flatten
-			gi_id = gi_id[0]
-			session[:applications].where("_id" => a['_id']).update( "$pushAll" => {  gears: [
-					_id: gears[0]['_id'],
-					app_dns: gears[0]['app_dns'],
-					host_singletons: gears[0]['host_singletons'],
-					name: gears[0]['name'],
-					quarantined: gears[0]['quarantined'],
-					server_identity: gears[0]['server_identity'],
-					sparse_carts: gears[0]['sparse_carts'],
-					uid: gears[0]['uid'],
-					uuid: gears[0]['uuid'],
-					group_instance_id: gi_id
-				] 
-			})
+      if gears[0] != nil
+  			gi_id = gi_id[0]
+        puts "gears #{gears}"
+  			session[:applications].where("_id" => a['_id']).update( "$pushAll" => {  gears: [
+  					_id: gears[0]['_id'],
+  					app_dns: gears[0]['app_dns'],
+  					host_singletons: gears[0]['host_singletons'],
+  					name: gears[0]['name'],
+  					quarantined: gears[0]['quarantined'],
+  					server_identity: gears[0]['server_identity'],
+  					sparse_carts: gears[0]['sparse_carts'],
+  					uid: gears[0]['uid'],
+  					uuid: gears[0]['uuid'],
+  					group_instance_id: gi_id
+  				] 
+  			})
 
-			session[:applications].where("_id" => a['_id']).update( "$unset" => { group_instances: 1 } )
-			session[:applications].where("_id" => a['_id']).update( "$push" => { group_instances: { _id: gi_id} } )
+			  session[:applications].where("_id" => a['_id']).update( "$unset" => { group_instances: 1 } )
+			  session[:applications].where("_id" => a['_id']).update( "$push" => { group_instances: { _id: gi_id} } )
+      end
 		end
 	end
 end
