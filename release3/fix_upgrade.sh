@@ -163,6 +163,8 @@ EOF
 
 chkconfig haproxy off
 
+sed -i 's/OPENSHIFT_NODE_PLUGINS=".*"/OPENSHIFT_NODE_PLUGINS=""/' /etc/openshift/node.conf
+
 set -e
 
 ./fix_deployments.sh
