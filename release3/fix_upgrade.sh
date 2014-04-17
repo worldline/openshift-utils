@@ -12,11 +12,6 @@ yum install -y rubygem-openshift-origin-frontend-apache-mod-rewrite.noarch rubyg
 service openshift-node-web-proxy enable
 service openshift-node-web-proxy start
 
-iptables -N rhc-app-comm
-iptables -I INPUT 4 -m tcp -p tcp --dport 35531:65535 -m state --state NEW -j ACCEPT
-iptables -I INPUT 5 -j rhc-app-comm
-iptables -I OUTPUT 1 -j rhc-app-comm
-/sbin/service iptables save
 
 rm -fr /usr/libexec/openshift/cartridges/v2/nodejs
 
@@ -164,6 +159,12 @@ EOF
 chkconfig haproxy off
 
 sed -i 's/OPENSHIFT_NODE_PLUGINS=".*"/OPENSHIFT_NODE_PLUGINS=""/' /etc/openshift/node.conf
+
+iptables -N rhc-app-comm
+iptables -I INPUT 4 -m tcp -p tcp --dport 35531:65535 -m state --state NEW -j ACCEPT
+iptables -I INPUT 5 -j rhc-app-comm
+iptables -I OUTPUT 1 -j rhc-app-comm
+/sbin/service iptables save
 
 set -e
 
