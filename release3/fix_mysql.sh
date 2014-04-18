@@ -9,7 +9,7 @@ for i in *; do
 	if [ -d "$GEAR_BASE_DIR/$i/mysql" ]; then
 		echo "mysql found in $GEAR_BASE_DIR/$i/mysql"
 		oo-admin-ctl-gears stopgear $i
-		rm -f /var/lib/openshift/$i/mysq/data/ib_logfile*
+		rm -f $GEAR_BASE_DIR/$i/mysql/data/ib_logfile*
 		oo-admin-ctl-gears startgear $i
 	fi
 	popd
