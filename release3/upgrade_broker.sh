@@ -8,4 +8,9 @@ echo "fix rest_url in /opt/rh/ruby193/root/usr/share/gems/gems/openshift-origin-
 #    "https://apps.zone52.org/broker/rest/"
 #  end
 
+sed -i 's/AUTH_PRIVKEYFILE/AUTH_PRIV_KEY_FILE/g' /etc/openshift/broker.conf
+sed -i 's/AUTH_PRIVKEYPASS/AUTH_PRIV_KEY_PASS/g' /etc/openshift/broker.conf
+sed -i 's/AUTH_PUBKEYFILE/AUTH_PUB_KEY_FILE/g' /etc/openshift/broker.conf
+sed -i 's/AUTH_RSYNCKEYFILE/AUTH_RSYNC_KEY_FILE/g' /etc/openshift/broker.conf
+
 
