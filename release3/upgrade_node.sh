@@ -31,6 +31,8 @@ chkconfig network on
 chkconfig sshd on
 chkconfig oddjobd on
 chkconfig openshift-node-web-proxy on
+chkconfig ruby193-mcollective on
+
 
 
 cat <<EOF | augtool
@@ -143,8 +145,48 @@ service openshift-port-proxy start
 
 chkconfig openshift-gears on
 
+sed -i '/# Generally the following should not be changed/q' /etc/openshift/node.conf
+
 cat <<EOF >> /etc/openshift/node.conf
+
 EXTERNAL_ETH_DEV="eth0"
+
+# Generally the following should not be changed:
+ENABLE_CGROUPS=1                                             # constrain gears in cgroups (1=yes, 0=no)
+GEAR_BASE_DIR="/var/lib/openshift"                           # gear root directory
+GEAR_SKEL_DIR="/etc/openshift/skel"                          # skel files to use when building a gear
+GEAR_SHELL="/usr/bin/oo-trap-user"                           # shell to use for the gear
+GEAR_GECOS="OpenShift guest"                                 # Gecos information to populate for the gear user
+GEAR_MIN_UID=1000                                            # Lower bound of UID used to create gears
+GEAR_MAX_UID=6999                                            # Upper bound of UID used to create gears
+OPENSHIFT_NODE_PLUGINS=""                                    # Extensions to load when customize/observe openshift-origin-node models
+CARTRIDGE_BASE_PATH="/usr/libexec/openshift/cartridges"      # Locations where cartridges are installed
+LAST_ACCESS_DIR="/var/lib/openshift/.last_access"            # Location to maintain last accessed time for gears
+APACHE_ACCESS_LOG="/var/log/httpd/openshift_log"             # Localion of httpd for node
+PROXY_MIN_PORT_NUM=35531                                     # Lower bound of port numbers used to proxy ports externally
+PROXY_PORTS_PER_GEAR=5                                       # Number of proxy ports available per gear
+CREATE_APP_SYMLINKS=0                                        # If set to 1, creates gear-name symlinks to the UUID directories (debugging only)
+OPENSHIFT_HTTP_CONF_DIR="/etc/httpd/conf.d/openshift"
+
+PLATFORM_LOG_FILE=/var/log/openshift/node/platform.log
+PLATFORM_LOG_LEVEL=DEBUG
+PLATFORM_TRACE_LOG_FILE=/var/log/openshift/node/platform-trace.log
+PLATFORM_TRACE_LOG_LEVEL=DEBUG
+
+LIBVIRT_PRIVATE_IP_RANGE=172.16.0.0/12
+LIBVIRT_PRIVATE_IP_ROUTE=172.16.0.0/12
+LIBVIRT_PRIVATE_IP_GW=172.16.0.1
+
+CONTAINERIZATION_PLUGIN=openshift-origin-container-selinux
+QUOTA_WARNING_PERCENT=90.0
+
+# MOTD_FILE=" /etc/openshift/welcome.rhcsh"                   # Change the default rhcs welcome message
+
+# Gems for managing the frontend http server
+# NOTE: Steps must be taken both before and after these values are changed.
+#       Run "oo-frontend-plugin-modify  --help" for more information.
+OPENSHIFT_FRONTEND_HTTP_PLUGINS=openshift-origin-frontend-apache-mod-rewrite,openshift-origin-frontend-nodejs-websocket
+
 EOF
 
 
@@ -160,6 +202,8 @@ chkconfig haproxy off
 
 sed -i 's/OPENSHIFT_NODE_PLUGINS=".*"/OPENSHIFT_NODE_PLUGINS=""/' /etc/openshift/node.conf
 
+oo-cgroup-enable -a
+
 iptables -N rhc-app-comm
 iptables -I INPUT 4 -m tcp -p tcp --dport 35531:65535 -m state --state NEW -j ACCEPT
 iptables -I INPUT 5 -j rhc-app-comm
@@ -172,3 +216,9 @@ set -e
 ./fix_gear_registry.sh
 ./migrate_port_proxy.sh all
 ./fix_rewrite.sh
+
+echo "" > "/var/log/node-web-proxy/websockets.log"
+oo-last-access
+
+oo-accept-node
+echo "do manual cleaning"
