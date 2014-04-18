@@ -218,6 +218,8 @@ set -e
 ./fix_rewrite.sh
 ./fix_mysql.sh
 
+yum remove openshift-origin-port-proxy.noarch -y
+
 echo "" > "/var/log/node-web-proxy/websockets.log"
 oo-last-access
 
