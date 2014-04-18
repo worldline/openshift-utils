@@ -216,6 +216,7 @@ set -e
 ./fix_gear_registry.sh
 ./migrate_port_proxy.sh all
 ./fix_rewrite.sh
+./fix_mysql.sh
 
 echo "" > "/var/log/node-web-proxy/websockets.log"
 oo-last-access
