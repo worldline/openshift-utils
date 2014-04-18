@@ -14,3 +14,4 @@ sed -i 's/AUTH_PUBKEYFILE/AUTH_PUB_KEY_FILE/g' /etc/openshift/broker.conf
 sed -i 's/AUTH_RSYNCKEYFILE/AUTH_RSYNC_KEY_FILE/g' /etc/openshift/broker.conf
 
 
+echo "Add proxy env var in /etc/init.d/openshift-broker"

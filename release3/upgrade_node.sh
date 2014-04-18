@@ -225,3 +225,7 @@ oo-last-access
 
 oo-accept-node
 echo "do manual cleaning"
+
+echo "fix carrtidge upgrade"
+
+echo "apply https://github.com/openshift/openshift-extras/tree/enterprise-2.0/security but make sure apache and others global services can to connect to gears"
